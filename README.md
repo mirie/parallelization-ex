@@ -23,7 +23,7 @@ uv run main.py --debug              # show each parallel output, then the synthe
 
 ## Findings: the synthesis step pulls from training data
 
-Running `--debug` on "The history of space exploration" showed where the final answer's content came from.
+Running `--debug` shows where the final answer's content comes from. Exact outputs vary from run to run, but the pattern is consistent.
 
 ### Nothing in this pipeline has source material
 
@@ -33,16 +33,16 @@ The only input is the topic string. Even the stage-1 outputs (the summary, the q
 
 The synthesis prompt says "Synthesize a comprehensive answer." It does not say "using only the information above", so the model treats the stage-1 outputs as an outline and fills in the rest from what it knows.
 
-- **Reused from the inputs:** the "Concise timeline" section is the summary again, lightly reworded. The key terms appear where expected.
-- **Added by the synthesis (in none of the stage-1 outputs):** Saturn V, lunar orbit rendezvous, heat shields, bone and muscle loss, CubeSats, miniaturization, Falcon 9, NASA's COTS and Commercial Crew programs, the Artemis Accords, space debris, planetary protection, space tourism, asteroid mining, and a "Remaining technical challenges" section.
+- **Reused from the inputs:** parts of the synthesis restate the stage-1 summary, lightly reworded, and the key terms appear where expected.
+- **Added by the synthesis (in none of the stage-1 outputs):** extra facts, names, programs and whole sections that no stage-1 output mentioned.
 
 ### Why
 
-The three generated questions contain no facts, only prompts. Answering "which breakthroughs were most critical?" requires knowledge the inputs don't contain, so the model supplies it. The synthesis also added closing offers ("If you'd like, I can…") that nothing asked for.
+The generated questions contain no facts, only prompts. Answering them requires knowledge the inputs don't contain, so the model supplies it. The synthesis may also add unrequested extras, such as closing offers to expand further.
 
 ### Accuracy risk
 
-Facts that aren't in the inputs are unchecked. In that run the synthesis said reusable boosters were "first pioneered in concept by the Shuttle". The Shuttle reused its orbiter and solid rocket boosters, which is different from landing and reflying a booster.
+Facts that aren't in the inputs are unchecked, so the synthesis can state things that are wrong or misleading.
 
 ### Ways to keep the synthesis grounded (not implemented)
 
