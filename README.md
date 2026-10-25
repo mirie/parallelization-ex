@@ -8,15 +8,15 @@ Three independent chains (summary, three questions, key terms) run in parallel o
 
 ```bash
 cp .env.example .env   # then set OPENAI_API_KEY (and optionally OPENAI_MODEL)
-uv run main.py
+uv run langchain_parallel.py
 ```
 
 ## Usage
 
 ```bash
-uv run main.py                      # default topic, final answer only
-uv run main.py "How vaccines work"  # custom topic
-uv run main.py --debug              # show each parallel output, then the synthesis
+uv run langchain_parallel.py                      # default topic, final answer only
+uv run langchain_parallel.py "How vaccines work"  # custom topic
+uv run langchain_parallel.py --debug              # show each parallel output, then the synthesis
 ```
 
 `--debug` runs the parallel stage once and passes those same results into the synthesis, so you can compare the intermediate outputs with the final answer from a single run.
