@@ -1,0 +1,21 @@
+[project]
+name = "parallelization-ex"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mai Irie", email = "mai.irie@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=1.4.7",
+    "langchain-openai>=1.7.2",
+    "python-dotenv>=1.2.4",
+]
+
+[project.scripts]
+parallelization-ex = "parallelization_ex:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
