@@ -13,8 +13,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import Runnable, RunnableParallel, RunnablePassthrough
 
 
-def build_parallel_chain(llm: BaseChatModel) -> Runnable:
-    """Build the parallel + synthesis chain around the given LLM."""
+def build_map_chain(llm: BaseChatModel) -> Runnable:
+    """Build the block of independent chains that run in parallel."""
 
     # --- Define independent chains ---
     # These 3 chains represent distinct tasks that can be executed in parallel.
@@ -48,7 +48,7 @@ def build_parallel_chain(llm: BaseChatModel) -> Runnable:
     # --- Build the parallel + synthesis chain ---
     # 1. Define the block of tasks to run in parallel. The results of these, along with the original topic, will be fed into
     # the next step.
-    map_chain = RunnableParallel(
+    return RunnableParallel(
         {
             "summary": summarize_chain,
             "questions": questions_chain,
@@ -56,6 +56,10 @@ def build_parallel_chain(llm: BaseChatModel) -> Runnable:
             "topic": RunnablePassthrough(),  # Pass the original topic through
         }
     )
+
+
+def build_synthesis_chain(llm: BaseChatModel) -> Runnable:
+    """Build the chain that combines the parallel results into one answer."""
 
     # 2. Define the final synthesis prompt which will combine the parallel results.
     synthesis_prompt = ChatPromptTemplate.from_messages([
@@ -68,9 +72,13 @@ def build_parallel_chain(llm: BaseChatModel) -> Runnable:
         ("user", "Original topic: {topic}")
     ])
 
-    # 3. Construct the full chain by piping the parallel results directly into the synthesis prompt,
-    #    followed by the LLM and output parser.
-    return map_chain | synthesis_prompt | llm | StrOutputParser()
+    return synthesis_prompt | llm | StrOutputParser()
+
+
+def build_parallel_chain(llm: BaseChatModel) -> Runnable:
+    """Build the parallel + synthesis chain around the given LLM."""
+    # 3. Construct the full chain by piping the parallel results directly into the synthesis chain.
+    return build_map_chain(llm) | build_synthesis_chain(llm)
 
 
 async def run_parallel_example(chain: Runnable, topic: str) -> None:
@@ -92,6 +100,22 @@ async def run_parallel_example(chain: Runnable, topic: str) -> None:
         print(f"\nAn error occurred during chain execution: {e}")
 
 
+async def run_debug_example(map_chain: Runnable, synthesis_chain: Runnable, topic: str) -> None:
+    """Run the two stages separately, printing the parallel results and then the synthesis."""
+    print(f"\n--- Running parallel LangChain example (debug) for topic: '{topic}' ---")
+    try:
+        results = await map_chain.ainvoke(topic)
+        for key, value in results.items():
+            print(f"\n===== {key} =====\n{value}")
+
+        # The same results go into the synthesis step, so the two outputs come from one run.
+        response = await synthesis_chain.ainvoke(results)
+        print("\n===== synthesis (final response) =====")
+        print(response)
+    except Exception as e:
+        print(f"\nAn error occurred during chain execution: {e}")
+
+
 def main() -> None:
     # --- Get topic from argument if passed, otherwise use default. ---
     parser = argparse.ArgumentParser()
@@ -100,6 +124,11 @@ def main() -> None:
         nargs="?",
         default="The history of space exploration",
         help="Topic to process (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print each parallel chain's output before the final synthesis",
     )
     args = parser.parse_args()
 
@@ -112,6 +141,10 @@ def main() -> None:
     llm = ChatOpenAI(model=model_name, temperature=0.7)
 
     # --- Run ---
+    if args.debug:
+        asyncio.run(run_debug_example(build_map_chain(llm), build_synthesis_chain(llm), args.topic))
+        return
+
     chain = build_parallel_chain(llm)
     asyncio.run(run_parallel_example(chain, args.topic))
 
