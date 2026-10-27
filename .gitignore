@@ -23,3 +23,6 @@ htmlcov/
 .idea/
 .vscode/
 .DS_Store
+
+# ADK local session data (adk web / adk run)
+.adk/
